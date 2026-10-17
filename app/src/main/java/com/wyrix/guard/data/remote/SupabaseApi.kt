@@ -118,6 +118,14 @@ class SupabaseApi @Inject constructor(private val store: SecureStore) {
 
     suspend fun restArray(pathAndQuery: String): JsonArray = json.parseToJsonElement(rest("GET", pathAndQuery)).jsonArray
 
+    suspend fun uploadObject(bucket: String, path: String, bytes: ByteArray, contentType: String) {
+        val req = Request.Builder().url("$base/storage/v1/object/$bucket/$path").header("apikey", anon)
+            .header("Authorization", "Bearer ${token()}").header("x-upsert", "false")
+            .post(bytes.toRequestBody(contentType.toMediaType())).build()
+        val (code, text) = exec(req)
+        if (code !in 200..299) throw ApiException(errorCode(code, text), code)
+    }
+
     // ---------------- Edge Functions ----------------
     suspend fun fn(name: String, body: JsonObject): JsonObject {
         val req = Request.Builder().url("$base/functions/v1/$name").header("apikey", anon)

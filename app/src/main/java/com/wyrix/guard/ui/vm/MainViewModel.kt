@@ -169,6 +169,12 @@ class MainViewModel @Inject constructor(
     }
     fun buildCsv(): File = ReportGenerator.csv(ctx, locations.value)
 
+    fun setPhotoEnabled(on: Boolean) {
+        if (on && !Perms.camera(ctx)) { message("Allow camera access first."); return }
+        store.photoEnabled = on; refresh()
+        viewModelScope.launch { runCatching { tracking.syncNow() } }
+    }
+
     // ---------- privacy & account ----------
     fun deleteLocalHistory() = launchBusy { db.locations().clear(); db.events().clear(); message("Local history deleted.") }
     fun revokeThisDevice(password: String) = launchBusy {
