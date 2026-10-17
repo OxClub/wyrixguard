@@ -172,7 +172,7 @@ class MainViewModel @Inject constructor(
     fun deleteLocalHistory() = launchBusy { db.locations().clear(); db.events().clear(); message("Local history deleted.") }
     fun revokeThisDevice(password: String) = launchBusy {
         api.signIn(store.email ?: "", password)              // fresh sign-in => server accepts the sensitive action
-        api.fn("revoke-device", buildJsonObject { put("device_id", store.deviceId ?: return@launchBusy })); devices.wipeLocal()
+        api.fn("revoke-device", buildJsonObject { put("device_id", store.deviceId ?: return@launchBusy }); devices.wipeLocal()
         message("This device was removed from your account.")
     }
     fun deleteAccount(password: String) = launchBusy {
