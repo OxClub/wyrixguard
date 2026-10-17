@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.wyrix.guard.data.CommandProcessor
 import com.wyrix.guard.data.DeviceRepository
+import com.wyrix.guard.data.EvidenceRepository
 import com.wyrix.guard.data.SecureStore
 import com.wyrix.guard.data.TrackingRepository
 import com.wyrix.guard.data.crypto.DeviceKeys
@@ -39,6 +40,7 @@ interface AppEntryPoint {
     fun commands(): CommandProcessor
     fun geofences(): GeofenceManager
     fun devices(): DeviceRepository
+    fun evidence(): EvidenceRepository
 }
 
 fun Context.entry(): AppEntryPoint = EntryPointAccessors.fromApplication(applicationContext, AppEntryPoint::class.java)

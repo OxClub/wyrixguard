@@ -39,6 +39,7 @@ data class UiState(
     val enrolled: Boolean = false, val deviceName: String = "", val tracking: Boolean = false, val mode: String = "normal",
     val lost: Boolean = false, val tier: String = "free", val lastSyncAt: Long = 0, val dropped: Long = 0,
     val fine: Boolean = false, val bg: Boolean = false, val notif: Boolean = false, val admin: Boolean = false,
+    val photoEnabled: Boolean = false, val camera: Boolean = false,
     val imei: String = "", val message: String? = null, val busy: Boolean = false,
     val geofences: List<GeofenceUi> = emptyList(), val contacts: List<ContactUi> = emptyList(),
 )
@@ -85,7 +86,7 @@ class MainViewModel @Inject constructor(
             enrolled = store.deviceId != null, tracking = LocationService.running || store.trackingEnabled, mode = store.trackingMode,
             lost = store.lostActive, lastSyncAt = store.lastSyncAt, dropped = store.droppedRecords,
             fine = Perms.fineLocation(ctx), bg = Perms.backgroundLocation(ctx), notif = Perms.notifications(ctx),
-            admin = Perms.adminActive(ctx), imei = store.imei ?: "", deviceName = it.deviceName.ifBlank { Build.MODEL ?: "" })
+            admin = Perms.adminActive(ctx), photoEnabled = store.photoEnabled, camera = Perms.camera(ctx), imei = store.imei ?: "", deviceName = it.deviceName.ifBlank { Build.MODEL ?: "" })
     }
 
     fun message(m: String?) = _ui.update { it.copy(message = m) }

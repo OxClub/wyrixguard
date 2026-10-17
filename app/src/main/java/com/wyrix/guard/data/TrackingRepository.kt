@@ -36,6 +36,7 @@ class TrackingRepository @Inject constructor(
     private val api: SupabaseApi,
     private val store: SecureStore,
     private val devices: DeviceRepository,
+    private val evidence: EvidenceRepository,
 ) {
     private val syncLock = Mutex()
 
@@ -87,6 +88,7 @@ class TrackingRepository @Inject constructor(
                     if (rows.isEmpty()) break
                     pushEvents(deviceId, rows)
                 }
+                evidence.uploadPending()
                 updateStatus(deviceId)
                 store.lastSyncAt = System.currentTimeMillis()
                 db.locations().pruneSynced(System.currentTimeMillis() - 7 * 86_400_000L)

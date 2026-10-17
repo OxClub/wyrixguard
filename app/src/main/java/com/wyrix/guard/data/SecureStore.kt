@@ -34,6 +34,8 @@ class SecureStore @Inject constructor(@ApplicationContext ctx: Context, private 
     var simState: String? get() = get(SIM); set(v) { if (v == null) remove(SIM) else put(SIM, v) }
     var geofenceNames: String get() = get(GEO_NAMES) ?: "{}"; set(v) = put(GEO_NAMES, v)
     var imei: String? get() = get(IMEI); set(v) { if (v == null) remove(IMEI) else put(IMEI, v) }
+    var photoEnabled: Boolean get() = getBool(PHOTO); set(v) = putBool(PHOTO, v)
+    var lastPhotoAt: Long get() = getLong(LAST_PHOTO); set(v) = putLong(LAST_PHOTO, v)
     var droppedRecords: Long get() = getLong(DROPPED); set(v) = putLong(DROPPED, v)
 
     companion object {
@@ -41,6 +43,7 @@ class SecureStore @Inject constructor(@ApplicationContext ctx: Context, private 
         const val USER_ID = "user_id"; const val EMAIL = "email"; const val DEVICE_ID = "device_id"
         const val TRACKING = "tracking"; const val MODE = "mode"; const val LAST_SYNC = "last_sync"
         const val LOST_MSG = "lost_msg"; const val LOST_CONTACT = "lost_contact"; const val SIM = "sim_state"
+        const val PHOTO = "photo_enabled"; const val LAST_PHOTO = "last_photo"
         const val GEO_NAMES = "geo_names"; const val IMEI = "imei"; const val DROPPED = "dropped"
     }
 }

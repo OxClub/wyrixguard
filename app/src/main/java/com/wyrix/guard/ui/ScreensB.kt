@@ -1,7 +1,12 @@
 package com.wyrix.guard.ui
 import androidx.compose.runtime.saveable.rememberSaveable
 
+import android.Manifest
 import android.annotation.SuppressLint
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.wyrix.guard.system.PhotoCapture
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -108,7 +113,7 @@ fun AlertsScreen(events: List<EventEntity>, simOnly: Boolean) {
 
 @Composable
 fun MoreScreen(onOpen: (String) -> Unit) {
-    val entries = listOf("sim" to "SIM alerts", "geofences" to "Geofences", "reports" to "Recovery reports & IMEI", "contacts" to "Emergency contacts",
+    val entries = listOf("sim" to "SIM alerts", "geofences" to "Geofences", "photos" to "Evidence photos", "reports" to "Recovery reports & IMEI", "contacts" to "Emergency contacts",
         "privacy" to "Privacy & permissions", "plan" to "Subscription", "settings" to "Account settings")
     LazyColumn(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("More", style = MaterialTheme.typography.headlineMedium) }
@@ -188,10 +193,10 @@ fun PrivacyScreen(vm: MainViewModel, s: UiState) {
     Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Privacy & permissions", style = MaterialTheme.typography.headlineMedium)
         Section("What is collected") {
-            Text("• Location (with accuracy and time), battery level, connection type, Android version.\n• Security events you enable: failed unlock attempts, SIM inserted/removed, geofence crossings, Lost Mode and alarm activity.\n• Your IMEI only if you type it in.")
+            Text("• Location (with accuracy and time), battery level, connection type, Android version.\n• Security events you enable: failed unlock attempts, SIM inserted/removed, geofence crossings, Lost Mode and alarm activity.\n• Your IMEI only if you type it in.\n• Optional evidence photos (front camera), only after you opt in.")
             Text("Collection happens in the background while protection is on, with a permanent notification. Data goes to your private WYRIX account over TLS; only you can read it.")
         }
-        Section("Not collected") { Text("Camera photos, microphone, contacts, messages, call logs, IMSI/ICCID, or other people's data. No accessibility service, no hidden icon.") }
+        Section("Not collected") { Text("Microphone, contacts, messages, call logs, IMSI/ICCID, or other people's data. Photos only if you switch on Evidence photos. No accessibility service, no hidden icon.") }
         Section("Permission status") {
             Text("Location: ${if (s.fine) "granted" else "not granted"}\nAll-the-time location: ${if (s.bg) "granted" else "not granted"}\nNotifications: ${if (s.notif) "granted" else "not granted"}\nDevice admin: ${if (s.admin) "on" else "off"}")
             OutlinedButton(onClick = { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))) }) { Text("Open Android app settings") }
@@ -247,5 +252,38 @@ fun SettingsScreen(vm: MainViewModel, s: UiState) {
             text = { OutlinedTextField(pw, { pw = it }, singleLine = true, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation()) },
             confirmButton = { TextButton(enabled = pw.isNotEmpty(), onClick = { if (d == "revoke") vm.revokeThisDevice(pw) else vm.deleteAccount(pw); dialog = null; pw = "" }) { Text("Confirm") } },
             dismissButton = { TextButton(onClick = { dialog = null; pw = "" }) { Text("Cancel") } })
+    }
+}
+
+@Composable
+fun PhotoEvidenceScreen(vm: MainViewModel, s: UiState) {
+    val activity = LocalContext.current as? ComponentActivity
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        vm.refresh(); if (ok) vm.setPhotoEnabled(true) else vm.message("Camera access was not allowed, so photos stay off.")
+    }
+    Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Evidence photos", style = MaterialTheme.typography.headlineMedium)
+        Section("How it works") {
+            Text("WYRIX GUARD can take one photo with the front camera when Lost Mode or the alarm screen appears on this phone, so you can see who has it.")
+            Text("• The photo is taken only while that screen is visible. Android shows its camera-in-use indicator, and the screen tells the person a photo may be taken.\n• Never in the background, never with the screen off, never video or audio.\n• Photos upload to your private account over TLS. Only you can see them. They are deleted automatically after 7 days (Free) or 30 days (Premium), or sooner if you delete them.\n• At most one photo every 10 minutes. You can turn this off at any time.")
+        }
+        Section("Permission and setting") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("Take photos on Lost Mode / alarm screen", Modifier.weight(1f))
+                Switch(checked = s.photoEnabled && s.camera, onCheckedChange = { on ->
+                    if (!on) vm.setPhotoEnabled(false)
+                    else if (!s.camera) permission.launch(Manifest.permission.CAMERA) else vm.setPhotoEnabled(true)
+                })
+            }
+            Muted(if (s.camera) "Camera access: granted" else "Camera access: not granted")
+        }
+        Section("Try it") {
+            Muted("Takes one photo now, with the camera indicator visible, to check that it works. It uploads to your account like any other photo.")
+            OutlinedButton(enabled = s.camera && activity != null, onClick = {
+                activity?.let { a -> PhotoCapture.capture(a, force = true) { ok -> vm.message(if (ok) "Photo saved. It uploads when you are online." else "Could not take a photo. This phone may have no front camera, or the camera is busy.") } }
+            }) { Text("Take a test photo") }
+        }
+        ErrorText(s.message)
+        Muted("Failed-unlock photos are not possible: Android does not let apps use the camera from the lock screen in the background.")
     }
 }

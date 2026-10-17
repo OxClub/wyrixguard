@@ -73,8 +73,8 @@ fun EnrollScreen(vm: MainViewModel, s: UiState) {
             Text("• This phone's location, with accuracy and time, plus battery and connection status, will be recorded and sent to your WYRIX account, including in the background while protection is on.")
             Text("• A permanent notification is shown whenever location is being collected. There is no hidden mode.")
             Text("• Only you (the account owner) can see this data. You can pause, revoke this device, export or delete everything at any time.")
-            Text("• Optional features (failed-unlock alerts via device administration, geofence alerts) are off until you turn them on.")
-            Text("• No photos, microphone, contacts, messages, IMEI or SIM numbers are collected.")
+            Text("• Optional features (failed-unlock alerts via device administration, geofence alerts, evidence photos) are off until you turn them on.")
+            Text("• No microphone, contacts, messages, IMEI or SIM numbers are collected. A front-camera photo is only ever taken if you opt in, and only while the Lost Mode or alarm screen is visible.")
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(consent, { consent = it })
@@ -140,7 +140,7 @@ fun HomeScreen(vm: MainViewModel, s: UiState, last: LocationEntity?, unsynced: I
                         .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_explanation)))
                 }) { Text("Enable") }
             }
-            Muted("Android 11+ asks for 'all the time' location on a separate screen. Photos of intruders are not supported: Android blocks background camera use.")
+            Muted("Android 11+ asks for 'all the time' location on a separate screen. Optional evidence photos are under More > Evidence photos.")
         }
 
         Section("Last confirmed location") {

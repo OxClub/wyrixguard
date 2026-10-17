@@ -16,6 +16,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.wyrix.guard.MainActivity
+import com.wyrix.guard.di.entry
 import com.wyrix.guard.R
 import com.wyrix.guard.service.WyrixAdminReceiver
 import com.wyrix.guard.ui.AlarmActivity
@@ -29,6 +30,7 @@ object Perms {
     fun fineLocation(c: Context) = has(c, Manifest.permission.ACCESS_FINE_LOCATION)
     fun anyLocation(c: Context) = fineLocation(c) || has(c, Manifest.permission.ACCESS_COARSE_LOCATION)
     fun backgroundLocation(c: Context) = has(c, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    fun camera(c: Context) = has(c, Manifest.permission.CAMERA)
     fun notifications(c: Context) = Build.VERSION.SDK_INT < 33 || has(c, Manifest.permission.POST_NOTIFICATIONS)
     fun adminComponent(c: Context) = ComponentName(c, WyrixAdminReceiver::class.java)
     fun adminActive(c: Context) =
@@ -62,7 +64,7 @@ object DeviceInfo {
         put("background_location", Perms.backgroundLocation(c))
         put("notifications", Perms.notifications(c))
         put("failed_unlock_events", Perms.adminActive(c))
-        put("camera_evidence", false)           // not supported: Android blocks background camera capture
+        put("camera_evidence", c.entry().store().photoEnabled && Perms.camera(c))
         put("imei_lookup", false)               // not possible for normal apps
         put("sim_state_events", true)
         put("sdk_int", Build.VERSION.SDK_INT)

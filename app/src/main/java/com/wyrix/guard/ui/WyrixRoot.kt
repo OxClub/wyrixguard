@@ -67,6 +67,7 @@ fun WyrixRoot() {
                     composable("more") { MoreScreen(onOpen = { nav.navigate(it) }) }
                     composable("sim") { AlertsScreen(events, simOnly = true) }
                     composable("geofences") { GeofencesScreen(vm, s) }
+                    composable("photos") { PhotoEvidenceScreen(vm, s) }
                     composable("reports") { ReportsScreen(vm, s) }
                     composable("contacts") { ContactsScreen(vm, s) }
                     composable("privacy") { PrivacyScreen(vm, s) }
