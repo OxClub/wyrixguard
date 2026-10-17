@@ -1,0 +1,70 @@
+name: Android CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Also build the signed release AAB"
+        type: boolean
+        default: false
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}   # public anon key only
+  DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      # The Gradle wrapper is not committed yet. Run `gradle wrapper --gradle-version 8.11.1` once and commit it, or keep this.
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.11.1 }
+      - name: Firebase config (optional, from secret)
+        env: { GSJ: "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" }
+        run: if [ -n "$GSJ" ]; then echo "$GSJ" | base64 -d > app/google-services.json; else echo "No Firebase config: push is inactive in this build"; fi
+      - name: Unit tests
+        run: gradle :app:testDebugUnitTest --stacktrace
+      - name: Lint
+        run: gradle :app:lintDebug --stacktrace
+      - name: Debug APK
+        run: gradle :app:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with: { name: wyrix-guard-debug-apk, path: "app/build/outputs/apk/debug/*.apk" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: android-reports, path: "app/build/reports/**\napp/build/test-results/**" }
+
+  release:
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    needs: debug
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.11.1 }
+      - name: Firebase config
+        env: { GSJ: "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" }
+        run: if [ -n "$GSJ" ]; then echo "$GSJ" | base64 -d > app/google-services.json; fi
+      - name: Decode keystore
+        env: { KS: "${{ secrets.WYRIX_KEYSTORE_B64 }}" }
+        run: echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+      - name: Signed release AAB
+        env:
+          WYRIX_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          WYRIX_KEYSTORE_PASSWORD: ${{ secrets.WYRIX_KEYSTORE_PASSWORD }}
+          WYRIX_KEY_ALIAS: ${{ secrets.WYRIX_KEY_ALIAS }}
+          WYRIX_KEY_PASSWORD: ${{ secrets.WYRIX_KEY_PASSWORD }}
+        run: gradle :app:bundleRelease --stacktrace
+      - uses: actions/upload-artifact@v4
+        with: { name: wyrix-guard-release-aab, path: "app/build/outputs/bundle/release/*.aab" }

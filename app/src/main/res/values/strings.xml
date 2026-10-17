@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">WYRIX GUARD</string>
+    <string name="admin_explanation">WYRIX GUARD uses device administration only to be told when someone enters the wrong unlock code, so it can alert you. It cannot read, change or wipe your lock code or data. You can turn this off at any time in system settings.</string>
+</resources>
