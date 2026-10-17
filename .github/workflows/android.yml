@@ -28,7 +28,8 @@ jobs:
         with: { gradle-version: 8.11.1 }
       - name: Firebase config (optional, from secret)
         env: { GSJ: "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" }
-        run: if [ -n "$GSJ" ]; then echo "$GSJ" | base64 -d > app/google-services.json; else echo "No Firebase config: push is inactive in this build"; fi
+        run: |
+          if [ -n "$GSJ" ]; then echo "$GSJ" | base64 -d > app/google-services.json; else echo "No Firebase config: push is inactive in this build"; fi
       - name: Unit tests
         run: gradle :app:testDebugUnitTest --stacktrace
       - name: Lint
