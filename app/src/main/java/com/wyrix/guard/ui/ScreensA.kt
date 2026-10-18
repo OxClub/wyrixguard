@@ -5,6 +5,7 @@ import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.Intent
 import android.os.Build
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -20,8 +21,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.wyrix.guard.R
+import com.wyrix.guard.BuildConfig
 import com.wyrix.guard.core.Accuracy
 import com.wyrix.guard.core.Consent
+import com.wyrix.guard.core.Links
 import com.wyrix.guard.core.TrackingMode
 import com.wyrix.guard.data.local.LocationEntity
 import com.wyrix.guard.system.Perms
@@ -109,6 +112,13 @@ fun HomeScreen(vm: MainViewModel, s: UiState, last: LocationEntity?, unsynced: I
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Security dashboard", style = MaterialTheme.typography.headlineMedium)
         if (s.lost) Section("Lost Mode is active") { Muted("Your owner marked this phone as lost. Recovery tracking is on.") }
+        Section("Web dashboard") {
+            Muted("See your phone on a map, send an alarm or Lost Mode, and view photos from any browser. Sign in with the same account.")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Links.dashboard(BuildConfig.DASHBOARD_URL)))) }) { Text("Open dashboard") }
+                OutlinedButton(onClick = { ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, Links.dashboard(BuildConfig.DASHBOARD_URL)), "Share dashboard link")) }) { Text("Share link") }
+            }
+        }
 
         Section("Protection") {
             Text(if (s.tracking) "ON: location is being recorded" else "OFF: this phone is not reporting its location", color = if (s.tracking) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error)
